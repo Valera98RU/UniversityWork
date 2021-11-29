@@ -8,11 +8,18 @@ define('NEGATIVE_FILTER','Negative');
 define('MEAN_REMOVAL','MeanRemoval');
 define('GAUSSIAN','Gaussian');
 
+/**
+ * Фильтров
+ */
 interface IFilter{
-
+    /**
+     * Применить фильтр
+     */
     public static function ApplyFilter(GdImage &$image):void;
 }
-
+/**
+ * Фильтр негатива
+ */
 class Negative implements IFilter {
 
     public static function ApplyFilter(GdImage &$image):void
@@ -20,6 +27,9 @@ class Negative implements IFilter {
         imagefilter($image,IMG_FILTER_NEGATE,[IMG_FILTER_PIXELATE=>512]);
     }
 }
+/**
+ * Фильтр эффекта эскиза
+ */
 class MeanRemoval implements IFilter {
 
     public static function ApplyFilter(GdImage &$image):void
@@ -27,6 +37,9 @@ class MeanRemoval implements IFilter {
         imagefilter($image,IMG_FILTER_MEAN_REMOVAL,[IMG_FILTER_PIXELATE=>512]);
     }
 }
+/**
+ * Фильтр размытия по гаусу
+ */
 class Gaussian implements IFilter{
     public static function ApplyFilter(GdImage &$image):void
     {
@@ -34,11 +47,19 @@ class Gaussian implements IFilter{
     }
 }
 
-
+/**
+ * Исполняемый код
+ */
 class main{
 
+    /**
+     * @param string $path Путь до изображения
+     * @param string $filter Название фильтра
+     */
     public function do(string $path, string $filter){
+        //Создаём объект изображения
         $images = ImageCreateFromJPEG($path);
+        //Применяем фильтр  изображению
         switch ($filter){
             case NEGATIVE_FILTER:
                 Negative::ApplyFilter($images);
