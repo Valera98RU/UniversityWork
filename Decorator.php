@@ -132,20 +132,24 @@ class main
         //Инициализируем объект фотографии
         $images = ImageCreateFromJPEG($path);
         //Иннициализируем фильтр по умолчанию
-        $filter = new Nothing();
+        $filters[] = new Nothing();
+
         if (in_array(NEGATIVE_FILTER, $filters)) {
             //если передан фильтр негатива то переинициализируем фильтр
-            $filter = new NegativeDecorator();
+            $$filters[] = new NegativeDecorator();
         }
         if (in_array(MEAN_REMOVAL, $filters)) {
             // если передан фильтр эффекта эскиза то переинициализируем фильтр
-            $filter = new MeanRemovalDecorator();
+            $$filters[] = new MeanRemovalDecorator();
         }
         if (in_array(GAUSSIAN, $filters)) {
              // если передан фильтр разытия по гаусу то переинициализируем фильтр
-            $filter = new GaussianDecorator();
+            $$filters[] = new GaussianDecorator();
         }
         //применяем фильтр
-        $filter->ApplyFilter($images);
+        foreach($filters as $filter)
+        {
+            $filter->ApplyFilter($images);
+        }        
     }
 }
