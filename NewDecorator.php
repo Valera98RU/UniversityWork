@@ -13,90 +13,80 @@ define('NEGATIVE_FILTER', 'Negative');
 define('MEAN_REMOVAL', 'MeanRemoval');
 define('GAUSSIAN', 'Gaussian');
 
-class Image
+abstract class Image
 {
-    private $iamge;
+    private $path;
 
     public function __construct(string $path)
     {
-        $this->iamge = $this->createImage($path);
+        $this->path = $path;
     }
 
     public function getImage():GdImage
     {
         return $this->iamge;
     }
+    public function getPath():string
+    {
+        return $this->path;
+    }
 
-    abstract private function createImage(string $path):GdImage;
+    abstract public function createImage():GdImage;
 
 }
+
 class JPEGImage extends Image{
-    private function createImage(string $path):GdImage
+    public function createImage():GdImage
     {
-        return imagecreatefromjpeg($path);
-    }
-}
-class PNGImage extends Image{
-    private function createImage(string $path):GdImage
-    {
-        return imagecreatefrompng($path);
+        return imagecreatefromjpeg($this->path);
     }
 }
 
-class BaseFilter
+class PNGImage extends Image{
+    public function createImage():GdImage
+    {
+        return imagecreatefrompng($this->path);
+    }
+}
+
+class ImageDecorator extends Image
 {
-    private Image $image;
+    protected Image $image;
     public function __construct(Image $image)
     {
+        parent::__construct($image->getPath());
         $this->image = $image;
     }
-
-    public function applyFilter():GdImage
+    public function createImage():GdImage
     {
-        return   imagefilter(
-                $this->image->getImage(),
-                $this->getFilterType(),
-                $this->getFilterParams()
-            );
-    }
-    private function getFilterType():int;
-    private function getFilterParams():array;    
-}
-
-class NegativeImage extends BaseFilter
-{
-    private function getFilterType():int
-    {
-        return IMG_FILTER_NEGATE;
-    }
-    private function getFilterParams():array
-    {
-        return [IMG_FILTER_PIXELATE => 512];
-    }
-}
-class MeanRemovalImage extends BaseFilter
-{
-    private function getFilterType():int
-    {
-        return IMG_FILTER_MEAN_REMOVAL;
-    }
-    private function getFilterParams():array
-    {
-        return [IMG_FILTER_PIXELATE => 512];
-    }
-}
-class GaussianImage extends BaseFilter
-{
-    private function getFilterType():int
-    {
-        return IMG_FILTER_GAUSSIAN_BLUR;
-    }
-    private function getFilterParams():array
-    {
-        return [IMG_FILTER_PIXELATE => 512];
+        return $this->image->createImage();
     }
 }
 
+class NegativeImage extends ImageDecorator
+{
+    public function __construct(Image $image)
+    {
+        parent::__construct($path,$image);
+    }
+    public function createImage():GdImage
+    {
+        return imagefilter($this->image->createImage(),IMG_FILTER_NEGATE);
+    }
+
+}
+
+class GaussianImage extends ImageDecorator
+{
+    public function __construct(Image $image)
+    {
+        parent::__construct($path,$image);
+    }
+    public function createImage():GdImage
+    {
+        return imagefilter($this->image->createImage(),IMG_FILTER_GAUSSIAN_BLUR);
+    }
+}
 
 /**
  * Выполяемый код
@@ -105,41 +95,27 @@ class main
 {
     
     public function do(string $path, string $filter, string $imageType = "JPEG"):GdImage
-    {
-        if(!file_exists($path)){
-            throw new \Exception("File not found");
-        }
-
+    {       
+        $image = null;
         switch($imageType)
         {
-            case "JPEG":
+            case 'JPEG':
                 $image = new JPEGImage($path);
                 break;
-            case "PNG":
+            case 'PNG':
                 $image = new PNGImage($path);
                 break;
-            default:
-                throw new \Exception("Image type not found");
-                break;
         }
-
         switch($filter)
         {
-            case NEGATIVE_FILTER:
-                $filter = new NegativeImage($image);
+            case 'Negative':
+                $image = new NegativeImage( $image );
                 break;
-            case MEAN_REMOVAL:
-                $filter = new MeanRemovalImage($image);
+            case 'Gausian':
+                $image  = new GaussianImage($image);
                 break;
-            case GAUSSIAN:
-                $filter = new GaussianImage($image);
-                break;
-            default:
-                throw new \Exception("Filter not found");
-                break;
-        }
 
-        return $filter->applyFilter();
-        
+        }
+        return $iamge->createImage();
     }
 }
